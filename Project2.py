@@ -1,3 +1,7 @@
+#Your Name: Christina Liggio
+#Your student id: 33453386
+#Your Email: cliggio@umich.edu
+#List who you worked with on this homework:
 from bs4 import BeautifulSoup
 import requests
 import re
@@ -14,8 +18,17 @@ def get_titles_from_search_results(filename):
 
     [('Book title 1', 'Author 1'), ('Book title 2', 'Author 2')...]
     """
-
-    pass
+    
+    lst_of_title = []
+    dire = os.path.dirname(__file__)
+    with open(os.path.join(dir, filename)) as fp:
+        soup = BeautifulSoup(fp, 'html.parser')
+        title = soup.find_all('a', class_ = 'bookTitle')
+        author = soup.find_all('a', class_ = 'authorName')
+        listt = (title, author)
+        for t in listt:
+            lst_of_title.append(t.text.strip())
+    return lst_of_title
 
 
 def get_search_links():
@@ -31,6 +44,21 @@ def get_search_links():
     “https://www.goodreads.com/book/show/kdkd".
 
     """
+
+    list_of_urls = []
+    base_url = 'https://goodreads.com'
+    url = 'https://www.goodreads.com/search?q=fantasy&qid=NwUsLiA2Nc'
+    resp = requests.get(url)
+    if resp.ok:
+        soup = BeautifulSoup(resp.content, 'html.parser')
+        feautured_reads = soup.find('div', class_ = 'mainContentFloat')
+        books = feautured_reads.find_all('tr', itemscope itemtype = 'https://schema.org/Book')
+        for book in books:
+            url = book.a.get('href', None)
+            list_of_urls.append(base_url+url)
+            
+
+
 
     pass
 
@@ -48,8 +76,18 @@ def get_book_summary(book_url):
     You can easily capture CSS selectors with your browser's inspector window.
     Make sure to strip() any newlines from the book title and number of pages.
     """
-
-    pass
+    resp = requests.get(book_url)
+    if resp.ok:
+        soup =  BeautifulSoup(resp.content, 'html.parser')
+        t = soup.find(id = 'bookTitle').text
+        a = soup.find('a', class_ = 'authorName').text
+        pages = soup.find('span', itemprop = 'numberOfPages').text
+        t = t.strip()
+        a = a.strip()
+        pages = pages.strip()
+        summary = (title, author, pages)
+    return summary
+    
 
 
 def summarize_best_books(filepath):
@@ -63,7 +101,22 @@ def summarize_best_books(filepath):
     ("Fiction", "The Testaments (The Handmaid's Tale, #2)", "https://www.goodreads.com/choiceawards/best-fiction-books-2020") 
     to your list of tuples.
     """
-    pass
+    bestBooks = []
+    with open(os.path.join(filepath, "best_books_2020.htm")) as fp:
+        soup = BeautifulSoup(fp, 'html.parser')
+        data = soup.find_all('div', class_ = 'category clearFix')
+        for item in data:
+            category = item.h4.text
+            category = category.strip()
+            title_a = item.find('div', class_ = "category__winnerImageContainer")
+            title_b = title.find("img", alt = True)
+            title_c = title_b['alt']
+            url = item.find("a").get("href")
+            tuplee = (category, title_c, url)
+            bestBooks.append(tuplee)
+    return bestBooks
+
+    
 
 
 def write_csv(data, filename):
