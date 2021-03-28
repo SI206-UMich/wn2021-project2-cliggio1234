@@ -56,11 +56,12 @@ def get_search_links():
         for book in books:
             url = book.a.get('href', None)
             list_of_urls.append(base_url+url)
-            
+    return lst_of_urls
 
 
 
-    pass
+
+    
 
 
 def get_book_summary(book_url):
