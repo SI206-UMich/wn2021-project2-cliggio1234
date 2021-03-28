@@ -140,7 +140,15 @@ def write_csv(data, filename):
 
     This function should not return anything.
     """
-    pass
+    dir = os.path.dirname(__file__)
+    outfile = open(os.path.join(dir, filename), 'w')
+    csv_writer = csv.writer(outFile)
+    csv_writer.writerow(['Book Title', 'Author Name'])
+    for item in data:
+        book_title = item[0]
+        author_name = item[2]
+        csv.writer.writerow([book_title, author_name])
+    outfile.close()
 
 
 def extra_credit(filepath):
