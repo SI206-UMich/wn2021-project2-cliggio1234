@@ -20,14 +20,14 @@ def get_titles_from_search_results(filename):
     """
     
     lst_of_title = []
-    dire = os.path.dirname(__file__)
+    dir = os.path.dirname(__file__)
     with open(os.path.join(dir, filename)) as fp:
         soup = BeautifulSoup(fp, 'html.parser')
         title = soup.find_all('a', class_ = 'bookTitle')
         author = soup.find_all('span', itemprop = 'name')
-        listt = (title, author)
-        for t in listt:
-            lst_of_title.append(t.text.strip())
+        for t in title:
+            x = (title[t], author[t])
+            lst_of_title.append(x)
     return lst_of_title
 
 
@@ -147,7 +147,7 @@ def write_csv(data, filename):
     for item in data:
         book_title = item[0]
         author_name = item[2]
-        csv.writer.writerow([book_title, author_name])
+        csv_writer.writerow([book_title, author_name])
     outfile.close()
 
 
@@ -163,7 +163,7 @@ def extra_credit(filepath):
 class TestCases(unittest.TestCase):
 
     # call get_search_links() and save it to a static variable: search_urls
-    search_links = get_search_links()
+    search_urls = get_search_links()
 
     def test_get_titles_from_search_results(self):
         # call get_titles_from_search_results() on search_results.htm and save to a local variable
@@ -187,16 +187,16 @@ class TestCases(unittest.TestCase):
         self.assertEqual(len(TestCases.test_get_search_links), 10)
 
         # check that each URL in the TestCases.search_urls is a string
-        for sl in TestCases.test_get_search_links:
+        for sl in TestCases.search_urls:
             self.assertIsInstance(sl, str)
         # check that each URL contains the correct url for Goodreads.com followed by /book/show/
-            self.assertTrue(url.startswith('https://www.goodreads.com/book/show/'))
+            self.assertTrue(sl.startswith('https://www.goodreads.com/book/show/'))
 
     def test_get_book_summary(self):
         # create a local variable – summaries – a list containing the results from get_book_summary()
         summaries = []
         # for each URL in TestCases.search_urls (should be a list of tuples)
-        for url in TestCases.search_urls():
+        for url in TestCases.search_urls:
             summary =  get_book_summary(url)
             summaries.append(summary)
         # check that the number of book summaries is correct (10)
