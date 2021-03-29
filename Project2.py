@@ -73,12 +73,13 @@ def get_book_summary(book_url):
     You can easily capture CSS selectors with your browser's inspector window.
     Make sure to strip() any newlines from the book title and number of pages.
     """
-    r = requests.get(book_url)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    title = soup.find('h1', id = "bookTitle").string.strip()
-    author = soup.find('a', {'class' : 'authorName'}).string.strip()
-    pages = int(soup.find('span', itemprop = "numberOfPages").string.strip(" pages"))
-    return(title, author, pages)
+    resp = requests.get(book_url)
+    if resp.ok:
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        t = soup.find('h1', id = "bookTitle").string.strip()
+        a = soup.find('a', {'class' : 'authorName'}).string.strip()
+        pages = int(soup.find('span', itemprop = "numberOfPages").string.strip(" pages"))
+    return(t, a, pages)
   
 
     
@@ -138,8 +139,8 @@ def write_csv(data, filename):
     csv_writer = csv.writer(outfile)
     csv_writer.writerow(['Book Title', 'Author Name'])
     for item in data:
-        book_title = item[0]
-        author_name = item[2]
+        book_title = item[1]
+        author_name = item[0]
         csv_writer.writerow([book_title, author_name])
     outfile.close()
 
