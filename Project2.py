@@ -25,8 +25,8 @@ def get_titles_from_search_results(filename):
         soup = BeautifulSoup(fp, 'html.parser')
         title = soup.find_all('a', class_ = 'bookTitle')
         author = soup.find_all('span', itemprop = 'name')
-        for t in title:
-            x = (title[t], author[t])
+        for t in soup:
+            x = (t[title], t[author])
             lst_of_title.append(x)
     return lst_of_title
 
@@ -46,22 +46,18 @@ def get_search_links():
     """
 
     list_of_urls = []
-    base_url = 'https://goodreads.com'
     url = 'https://www.goodreads.com/search?q=fantasy&qid=NwUsLiA2Nc'
     resp = requests.get(url)
-    if resp.ok:
-        soup = BeautifulSoup(resp.content, 'html.parser')
-        feautured_reads = soup.find('div', class_ = 'mainContentFloat')
-        books = feautured_reads.find_all('tr', itemtype = 'https://schema.org/Book')
-        for book in books:
-            url = book.a.get('href', None)
-            list_of_urls.append(base_url+url)
-    return list_of_urls
+    soup = BeautifulSoup(resp.text, 'html.parser')
+    books = soup.find_all('a', class_ = 'bookTitle', itemprop = 'url')
+    for book in books:
+        b = book['href']
+        if b.startswith('/book/show/'):
+            sites = 'https://www.goodreads.com' + str(b)
+            list_of_urls.append(sites)
+    return list_of_urls[:10]
 
 
-
-
-    
 
 
 def get_book_summary(book_url):
@@ -77,17 +73,14 @@ def get_book_summary(book_url):
     You can easily capture CSS selectors with your browser's inspector window.
     Make sure to strip() any newlines from the book title and number of pages.
     """
-    resp = requests.get(book_url)
-    if resp.ok:
-        soup =  BeautifulSoup(resp.content, 'html.parser')
-        t = soup.find(id = 'bookTitle').text
-        a = soup.find('a', class_ = 'authorName').text
-        pages = soup.find('span', itemprop = 'numberOfPages').text
-        t = t.strip()
-        a = a.strip()
-        pages = pages.strip()
-        summary = (t, a, pages)
-    return summary
+    r = requests.get(book_url)
+    soup = BeautifulSoup(r.text, 'html.parser')
+    title = soup.find('h1', id = "bookTitle").string.strip()
+    author = soup.find('a', {'class' : 'authorName'}).string.strip()
+    pages = int(soup.find('span', itemprop = "numberOfPages").string.strip(" pages"))
+    return(title, author, pages)
+  
+
     
 
 
@@ -181,10 +174,10 @@ class TestCases(unittest.TestCase):
         self.assertEqual(lst_of_title[-1], ('Harry Potter: The Prequel (Harry Potter, #0.5)', 'JK Rowling'))
     def test_get_search_links(self):
         # check that TestCases.search_urls is a list
-        self.assertIsInstance(TestCases.test_get_search_links, list)
+        self.assertIsInstance(TestCases.search_urls, list)
     
         # check that the length of TestCases.search_urls is correct (10 URLs)
-        self.assertEqual(len(TestCases.test_get_search_links), 10)
+        self.assertEqual(len(TestCases.search_urls), 10)
 
         # check that each URL in the TestCases.search_urls is a string
         for sl in TestCases.search_urls:
@@ -197,23 +190,24 @@ class TestCases(unittest.TestCase):
         summaries = []
         # for each URL in TestCases.search_urls (should be a list of tuples)
         for url in TestCases.search_urls:
-            summary =  get_book_summary(url)
+            summary = get_book_summary(url)
+            self.assertEqual(type(url), tuple)
             summaries.append(summary)
         # check that the number of book summaries is correct (10)
         self.assertEqual(len(summaries), 10)
             # check that each item in the list is a tuple
-        for summary in summaries:
-            self.assertIsInstance(summary, tuple)
+        for item in summaries:
+            self.assertIsInstance(type(item), tuple)
             # check that each tuple has 3 elements
-            self.assertEqual(len(summary), 3)
+            self.assertEqual(len(item), 3)
             # check that the first two elements in the tuple are string
-            self.assertIsInstance(summary[0], str)
-            self.assertIsInstance(summary[1], str)
+            self.assertIsInstance(item[0], str)
+            self.assertIsInstance(item[1], str)
             # check that the third element in the tuple, i.e. pages is an int
-            self.assertIsInstance(summary[2], int)
+            self.assertIsInstance(item[2], int)
             # check that the first book in the search has 337 pages
-            self.assertEqual(summary[0][2], 337)
-            #STILL HAVE TO DO THIS ONE
+            self.assertEqual(summaries[0][2], 337)
+     
 
 
     def test_summarize_best_books(self):
@@ -251,7 +245,7 @@ class TestCases(unittest.TestCase):
         # check that there are 21 lines in the csv
         self.assertEqual(len(liness), 21)
         # check that the header row is correct
-        self.assertEqual(liness[0].strip(), "Book title,Author name")
+        self.assertEqual(liness[0].strip(), "Book Title,Author Name")
         # check that the next row is 'Harry Potter and the Deathly Hallows (Harry Potter, #7)', 'J.K. Rowling'
         self.assertEqual(liness[1].strip(),'Harry Potter and the Deathly Hallows (Harry Potter, #7)', 'J.K. Rowling')
         # check that the last row is 'Harry Potter: The Prequel (Harry Potter, #0.5)', 'J.K. Rowling'
