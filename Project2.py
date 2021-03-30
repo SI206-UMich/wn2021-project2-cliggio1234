@@ -19,16 +19,14 @@ def get_titles_from_search_results(filename):
     [('Book title 1', 'Author 1'), ('Book title 2', 'Author 2')...]
     """
     
-    lst_of_title = []
-    dir = os.path.dirname(__file__)
-    with open(os.path.join(dir, filename)) as fp:
-        soup = BeautifulSoup(fp, 'html.parser')
-        title = soup.find_all('a', class_ = 'bookTitle')
-        author = soup.find_all('span', itemprop = 'name')
-        for t in soup:
-            x = (t[title], t[author])
-            lst_of_title.append(x)
-    return lst_of_title
+    soup = BeautifulSoup(open('search_results.htm'), 'html.parser')
+    books = []
+    for book in soup.findAll('tr', itemtype = "http://schema.org/Book"):
+        items = book.findAll('span', itemprop = 'name')
+        title = items[0].string.strip()
+        author = items[1].string.strip()
+        books.append((title, author))
+    return books
 
 
 def get_search_links():
@@ -74,11 +72,10 @@ def get_book_summary(book_url):
     Make sure to strip() any newlines from the book title and number of pages.
     """
     resp = requests.get(book_url)
-    if resp.ok:
-        soup = BeautifulSoup(resp.text, 'html.parser')
-        t = soup.find('h1', id = "bookTitle").string.strip()
-        a = soup.find('a', {'class' : 'authorName'}).string.strip()
-        pages = int(soup.find('span', itemprop = "numberOfPages").string.strip(" pages"))
+    soup = BeautifulSoup(resp.text, 'html.parser')
+    t = soup.find('h1', id = "bookTitle").string.strip()
+    a = soup.find('a', {'class' : 'authorName'}).string.strip()
+    pages = int(soup.find('span', itemprop = "numberOfPages").string.strip(" pages"))
     return(t, a, pages)
   
 
@@ -170,9 +167,9 @@ class TestCases(unittest.TestCase):
         for title in lst_of_title:
             self.assertIsInstance(title,tuple)
         # check that the first book and author tuple is correct (open search_results.htm and find it)
-        self.assertEqual(lst_of_title[0], ('Harry Potter and the Deathly Hallows (Harry Potter, #7)','JK Rowling'))
+        self.assertEqual(lst_of_title[0], ('Harry Potter and the Deathly Hallows (Harry Potter, #7)','J.K. Rowling'))
         # check that the last title is correct (open search_results.htm and find it)
-        self.assertEqual(lst_of_title[-1], ('Harry Potter: The Prequel (Harry Potter, #0.5)', 'JK Rowling'))
+        self.assertEqual(lst_of_title[-1], ('Harry Potter: The Prequel (Harry Potter, #0.5)', 'J.K. Rowling'))
     def test_get_search_links(self):
         # check that TestCases.search_urls is a list
         self.assertIsInstance(TestCases.search_urls, list)
@@ -191,8 +188,8 @@ class TestCases(unittest.TestCase):
         summaries = []
         # for each URL in TestCases.search_urls (should be a list of tuples)
         for url in TestCases.search_urls:
-            summary = get_book_summary(url)
             self.assertEqual(type(url), tuple)
+            summary = get_book_summary(url)
             summaries.append(summary)
         # check that the number of book summaries is correct (10)
         self.assertEqual(len(summaries), 10)
