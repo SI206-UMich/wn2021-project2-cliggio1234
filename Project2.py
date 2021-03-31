@@ -28,7 +28,6 @@ def get_titles_from_search_results(filename):
         books.append((title, author))
     return books
 
-
 def get_search_links():
     """
     Write a function that creates a BeautifulSoup object after retrieving content from
@@ -71,13 +70,13 @@ def get_book_summary(book_url):
     You can easily capture CSS selectors with your browser's inspector window.
     Make sure to strip() any newlines from the book title and number of pages.
     """
-    resp = requests.get(book_url)
-    soup = BeautifulSoup(resp.text, 'html.parser')
+    r = requests.get(book_url)
+    soup = BeautifulSoup(r.text, 'html.parser')
     t = soup.find('h1', id = "bookTitle").string.strip()
-    a = soup.find('a', {'class' : 'authorName'}).string.strip()
+    a = soup.find('a', {'class': 'authorName'}).string.strip()
     pages = int(soup.find('span', itemprop = "numberOfPages").string.strip(" pages"))
     return(t, a, pages)
-  
+
 
     
 
@@ -131,15 +130,11 @@ def write_csv(data, filename):
 
     This function should not return anything.
     """
-    dir = os.path.dirname(__file__)
-    outfile = open(os.path.join(dir, filename), 'w')
-    csv_writer = csv.writer(outfile)
-    csv_writer.writerow(['Book Title', 'Author Name'])
-    for item in data:
-        book_title = item[1]
-        author_name = item[0]
-        csv_writer.writerow([book_title, author_name])
-    outfile.close()
+    with open(filename, 'w') as file:
+        file.write('Book Title,Author Name\n')
+        for line in data:
+            file.write(','.join(line) + '\n')
+
 
 
 def extra_credit(filepath):
@@ -170,6 +165,7 @@ class TestCases(unittest.TestCase):
         self.assertEqual(lst_of_title[0], ('Harry Potter and the Deathly Hallows (Harry Potter, #7)','J.K. Rowling'))
         # check that the last title is correct (open search_results.htm and find it)
         self.assertEqual(lst_of_title[-1], ('Harry Potter: The Prequel (Harry Potter, #0.5)', 'J.K. Rowling'))
+    
     def test_get_search_links(self):
         # check that TestCases.search_urls is a list
         self.assertIsInstance(TestCases.search_urls, list)
@@ -188,14 +184,14 @@ class TestCases(unittest.TestCase):
         summaries = []
         # for each URL in TestCases.search_urls (should be a list of tuples)
         for url in TestCases.search_urls:
-            self.assertEqual(type(url), tuple)
             summary = get_book_summary(url)
+            self.assertEqual(type(summary), tuple)
             summaries.append(summary)
         # check that the number of book summaries is correct (10)
         self.assertEqual(len(summaries), 10)
             # check that each item in the list is a tuple
         for item in summaries:
-            self.assertIsInstance(type(item), tuple)
+            self.assertEqual(type(item), tuple)
             # check that each tuple has 3 elements
             self.assertEqual(len(item), 3)
             # check that the first two elements in the tuple are string
