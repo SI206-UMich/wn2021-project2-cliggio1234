@@ -21,11 +21,11 @@ def get_titles_from_search_results(filename):
     
     soup = BeautifulSoup(open('search_results.htm'), 'html.parser')
     books = []
-    for book in soup.findAll('tr', itemtype = "http://schema.org/Book"):
-        items = book.findAll('span', itemprop = 'name')
-        title = items[0].string.strip()
-        author = items[1].string.strip()
-        books.append((title, author))
+    for b in soup.findAll('tr', itemtype = "http://schema.org/Book"):
+        items = b.findAll('span', itemprop = 'name')
+        t = items[0].string.strip()
+        a = items[1].string.strip()
+        books.append((t, a))
     return books
 
 def get_search_links():
@@ -43,14 +43,14 @@ def get_search_links():
     """
 
     list_of_urls = []
-    url = 'https://www.goodreads.com/search?q=fantasy&qid=NwUsLiA2Nc'
-    resp = requests.get(url)
-    soup = BeautifulSoup(resp.text, 'html.parser')
-    books = soup.find_all('a', class_ = 'bookTitle', itemprop = 'url')
+    urls = 'https://www.goodreads.com/search?q=fantasy&qid=NwUsLiA2Nc'
+    resp = requests.get(urls)
+    soup1 = BeautifulSoup(resp.text, 'html.parser')
+    books = soup1.find_all('a', class_ = 'bookTitle', itemprop = 'url')
     for book in books:
-        b = book['href']
-        if b.startswith('/book/show/'):
-            sites = 'https://www.goodreads.com' + str(b)
+        bk = book['href']
+        if bk.startswith('/book/show/'):
+            sites = 'https://www.goodreads.com' + str(bk)
             list_of_urls.append(sites)
     return list_of_urls[:10]
 
@@ -71,10 +71,10 @@ def get_book_summary(book_url):
     Make sure to strip() any newlines from the book title and number of pages.
     """
     r = requests.get(book_url)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    t = soup.find('h1', id = "bookTitle").string.strip()
-    a = soup.find('a', {'class': 'authorName'}).string.strip()
-    pages = int(soup.find('span', itemprop = "numberOfPages").string.strip(" pages"))
+    soup2 = BeautifulSoup(r.text, 'html.parser')
+    t = soup2.find('h1', id = "bookTitle").string.strip()
+    a = soup2.find('a', {'class': 'authorName'}).string.strip()
+    pages = int(soup2.find('span', itemprop = "numberOfPages").string.strip(" pages"))
     return(t, a, pages)
 
 
@@ -132,8 +132,8 @@ def write_csv(data, filename):
     """
     with open(filename, 'w') as file:
         file.write('Book Title,Author Name\n')
-        for line in data:
-            file.write(','.join(line) + '\n')
+        for l in data:
+            file.write(','.join(l) + '\n')
 
 
 
@@ -229,11 +229,11 @@ class TestCases(unittest.TestCase):
     def test_write_csv(self):
         # call get_titles_from_search_results on search_results.htm and save the result to a variable
         dir = os.path.dirname(__file__)
-        best_books = summarize_best_books(dir)
+        searchr = get_titles_from_search_results(dir)
         # call write csv on the variable you saved and 'test.csv'
-        write_csv(best_books, "best_books_2020.csv")
+        write_csv(searchr, "search_results.csv")
         # read in the csv that you wrote (create a variable csv_lines - a list containing all the lines in the csv you just wrote to above)
-        inFile = open(os.path.join(dir, "best_books_2020.csv"), "r")
+        inFile = open(os.path.join(dir, "search_results.csv"), "r")
         liness = inFile.readlines()
 
         # check that there are 21 lines in the csv
@@ -241,9 +241,9 @@ class TestCases(unittest.TestCase):
         # check that the header row is correct
         self.assertEqual(liness[0].strip(), "Book Title,Author Name")
         # check that the next row is 'Harry Potter and the Deathly Hallows (Harry Potter, #7)', 'J.K. Rowling'
-        self.assertEqual(liness[1].strip(),'Harry Potter and the Deathly Hallows (Harry Potter, #7)', 'J.K. Rowling')
+        self.assertEqual(liness[1].strip(),'Harry Potter and the Deathly Hallows (Harry Potter, #7),J.K. Rowling')
         # check that the last row is 'Harry Potter: The Prequel (Harry Potter, #0.5)', 'J.K. Rowling'
-        self.assertEqual(liness[-1].strip(),'Harry Potter: The Prequel (Harry Potter, #0.5)', 'J.K. Rowling' )
+        self.assertEqual(liness[-1].strip(),'Harry Potter: The Prequel (Harry Potter, #0.5),J.K. Rowling' )
 
 
 if __name__ == '__main__':
