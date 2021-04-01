@@ -1,7 +1,7 @@
 #Your Name: Christina Liggio
 #Your student id: 33453386
 #Your Email: cliggio@umich.edu
-#List who you worked with on this homework:
+#List who you worked with on this homework: Amanda Rudolph 
 from bs4 import BeautifulSoup
 import requests
 import re
